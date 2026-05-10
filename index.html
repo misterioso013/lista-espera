@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ForjaDev · Pesquisa de Perfil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #141417;
+      --surface2: #18181c;
+      --border: #1f1f24;
+      --accent: #e8511a;
+      --text: #f0ede8;
+      --muted: #6b6870;
+      --muted2: #a09da8;
+      --tag-bg: #1a1a1f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse 60% 40% at 80% 10%, rgba(232,81,26,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,81,26,0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 52px 24px 100px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 56px;
+    }
+    .logo img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+    .logo-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .hero { margin-bottom: 48px; }
+
+    .hero-eyebrow {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.8rem, 5.5vw, 2.8rem);
+      line-height: 1.06;
+      margin-bottom: 20px;
+    }
+    h1 span { color: var(--accent); }
+
+    .hero p {
+      font-size: 1rem;
+      line-height: 1.75;
+      color: var(--muted2);
+      max-width: 520px;
+    }
+
+    .notice-box {
+      display: none;
+      margin-top: 20px;
+      padding: 14px 18px;
+      background: rgba(232,81,26,0.07);
+      border: 1px solid rgba(232,81,26,0.25);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: #f0a080;
+      line-height: 1.65;
+    }
+    .notice-box.visible { display: block; }
+
+    .divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+    .progress-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-family: 'Syne', sans-serif;
+      letter-spacing: 0.08em;
+    }
+    .progress-bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-bottom: 44px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    }
+
+    .step { display: none; }
+    .step.active { display: block; animation: fadeUp 0.38s ease both; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .step-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.65;
+    }
+
+    .options { display: flex; flex-direction: column; gap: 10px; }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.18s, background 0.18s;
+      text-align: left;
+    }
+    .option:hover { border-color: #2e2e35; background: var(--surface2); }
+    .option.selected { border-color: var(--accent); background: rgba(232,81,26,0.06); }
+
+    .option-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 1px; }
+    .option-text strong {
+      display: block;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.92rem;
+      margin-bottom: 3px;
+    }
+    .option-text span { font-size: 0.81rem; color: var(--muted); line-height: 1.5; }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+    .tag {
+      padding: 9px 16px;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      font-size: 0.83rem;
+      cursor: pointer;
+      transition: all 0.18s;
+      user-select: none;
+    }
+    .tag:hover { border-color: #2e2e35; }
+    .tag.selected { border-color: var(--accent); background: rgba(232,81,26,0.1); color: #f0a080; }
+
+    .price-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 480px) { .price-options { grid-template-columns: 1fr; } }
+
+    .price-card {
+      padding: 18px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.18s;
+      text-align: center;
+    }
+    .price-card:hover { border-color: #2e2e35; background: var(--surface2); }
+    .price-card.selected { border-color: var(--accent); background: rgba(232,81,26,0.06); }
+    .price-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.3rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .price-value.hi { color: var(--accent); }
+    .price-desc { font-size: 0.76rem; color: var(--muted); }
+
+    .day-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 24px; }
+    @media (max-width: 480px) { .day-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .day-btn {
+      padding: 13px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.18s;
+      user-select: none;
+    }
+    .day-btn:hover { border-color: #2e2e35; }
+    .day-btn.selected { border-color: var(--accent); background: rgba(232,81,26,0.08); color: #f0a080; }
+
+    .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    @media (max-width: 480px) { .time-grid { grid-template-columns: 1fr; } }
+
+    .time-btn {
+      padding: 14px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.82rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.18s;
+      user-select: none;
+      line-height: 1.5;
+    }
+    .time-btn:hover { border-color: #2e2e35; }
+    .time-btn.selected { border-color: var(--accent); background: rgba(232,81,26,0.08); color: #f0a080; }
+
+    .sublabel {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      margin-top: 22px;
+    }
+    .sublabel:first-child { margin-top: 0; }
+
+    textarea, input[type="text"], input[type="email"], input[type="tel"], select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 300;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    textarea { resize: vertical; min-height: 100px; }
+    textarea:focus, input:focus, select:focus { border-color: var(--accent); }
+    textarea::placeholder, input::placeholder { color: var(--muted); }
+    select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6870' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    select option { background: #1a1a1f; }
+
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 480px) { .input-row { grid-template-columns: 1fr; } }
+
+    .field-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .field-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 2px; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 32px;
+      align-items: center;
+    }
+
+    .btn-next {
+      padding: 14px 30px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.86rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.1s;
+    }
+    .btn-next:hover { background: #d04616; }
+    .btn-next:active { transform: scale(0.98); }
+    .btn-next:disabled { background: #252528; color: #444; cursor: not-allowed; }
+
+    .btn-back {
+      padding: 14px 18px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .btn-back:hover { border-color: #444; color: var(--text); }
+
+    .thankyou { display: none; text-align: center; padding: 60px 0; }
+    .thankyou.active { display: block; animation: fadeUp 0.5s ease both; }
+
+    .ty-icon {
+      width: 68px; height: 68px;
+      background: rgba(232,81,26,0.1);
+      border: 1px solid rgba(232,81,26,0.25);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.9rem;
+      margin: 0 auto 28px;
+    }
+    .ty-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2rem; margin-bottom: 16px; }
+    .ty-text { color: var(--muted2); font-size: 1rem; line-height: 1.75; max-width: 440px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="logo">
+    <img src="https://www.forjadev.com.br/images/forge-anvil.png" alt="ForjaDev" onerror="this.style.display='none'" />
+    <div class="logo-name">ForjaDev</div>
+  </div>
+
+  <div class="hero" id="hero-block">
+    <div class="hero-eyebrow">Lista de espera · Pesquisa de perfil</div>
+    <h1>Nos ajude a montar a <span>aula ideal</span> para você</h1>
+    <p>Você entrou na nossa lista de espera e estamos abrindo as matrículas em breve. Antes disso, queremos entender quem você é e o que precisa — leva menos de 3 minutos.</p>
+    <div class="notice-box" id="notice-responsavel">
+      👤 <strong>Atenção, responsável:</strong> nas próximas etapas, preencha com base no <em>aluno</em> — o filho ou dependente que vai estudar na ForjaDev.
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <div id="form-area">
+    <div class="progress-label" id="prog-label">Etapa 1 de 8</div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+
+    <!-- STEP 1: Perfil -->
+    <div class="step active" id="step-1">
+      <div class="step-title">Quem vai estudar na ForjaDev?</div>
+      <div class="step-desc">Isso define o tipo de acompanhamento e o instrutor certo.</div>
+      <div class="options">
+        <div class="option" data-val="adulto-transicao" onclick="selectOption(this,'perfil',1)">
+          <div class="option-icon">🔄</div>
+          <div class="option-text">
+            <strong>Quero mudar de carreira para tech</strong>
+            <span>Trabalho em outra área e quero entrar no mercado de desenvolvimento.</span>
+          </div>
+        </div>
+        <div class="option" data-val="adulto-crescimento" onclick="selectOption(this,'perfil',1)">
+          <div class="option-icon">📈</div>
+          <div class="option-text">
+            <strong>Já sou da área e quero evoluir</strong>
+            <span>Trabalho com tech mas quero aprender algo novo ou subir de nível.</span>
+          </div>
+        </div>
+        <div class="option" data-val="adulto-hobby" onclick="selectOption(this,'perfil',1)">
+          <div class="option-icon">🎮</div>
+          <div class="option-text">
+            <strong>Quero aprender por interesse pessoal</strong>
+            <span>Não é necessariamente para trabalho — gosto de tecnologia e programação.</span>
+          </div>
+        </div>
+        <div class="option" data-val="responsavel" onclick="selectOption(this,'perfil',1)">
+          <div class="option-icon">👨‍👧</div>
+          <div class="option-text">
+            <strong>Sou pai, mãe ou responsável</strong>
+            <span>Quero matricular um filho ou dependente. Preencherei as próximas etapas com base no aluno.</span>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-next" onclick="nextStep(1)" id="btn-1" disabled>Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Área -->
+    <div class="step" id="step-2">
+      <div class="step-title" id="s2-title">O que você quer aprender?</div>
+      <div class="step-desc">Pode marcar mais de uma área. Usamos isso para montar a trilha certa.</div>
+      <div class="tags" id="tags-2">
+        <div class="tag" onclick="toggleTag(this,'area',2)">🌐 Web (HTML / CSS / JS)</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">🐍 Python</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">🎮 Desenvolvimento de Jogos</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">📱 Apps Mobile</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">🤖 Automação / Bots</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">☁️ Backend / APIs</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">🧱 Lógica / Base de programação</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">🔐 Segurança / Cybersecurity</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">📊 Dados / SQL</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">🧩 Scratch / Programação infantil</div>
+        <div class="tag" onclick="toggleTag(this,'area',2)">🚀 Não sei ainda — preciso de orientação</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="goBack(2)">← Voltar</button>
+        <button class="btn-next" onclick="nextStep(2)" id="btn-2" disabled>Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Nível + Idade -->
+    <div class="step" id="step-3">
+      <div class="step-title" id="s3-title">Qual o seu nível e a sua idade?</div>
+      <div class="step-desc">Sem resposta errada — isso garante que a aula vai no ritmo certo.</div>
+
+      <div class="sublabel">Nível de programação</div>
+      <div class="options" style="margin-bottom:24px" id="options-nivel">
+        <div class="option" data-val="zero" onclick="selectOption(this,'nivel',3)">
+          <div class="option-icon">🌱</div>
+          <div class="option-text">
+            <strong>Zero — nunca programou</strong>
+            <span>Nenhuma experiência com código ainda.</span>
+          </div>
+        </div>
+        <div class="option" data-val="basico" onclick="selectOption(this,'nivel',3)">
+          <div class="option-icon">📚</div>
+          <div class="option-text">
+            <strong>Iniciante — já fez algum curso ou tutorial</strong>
+            <span>Conhece o básico mas trava quando sai do roteiro.</span>
+          </div>
+        </div>
+        <div class="option" data-val="intermediario" onclick="selectOption(this,'nivel',3)">
+          <div class="option-icon">⚙️</div>
+          <div class="option-text">
+            <strong>Intermediário — já construiu alguma coisa</strong>
+            <span>Consegue codar mas quer ir além.</span>
+          </div>
+        </div>
+        <div class="option" data-val="avancado" onclick="selectOption(this,'nivel',3)">
+          <div class="option-icon">🔥</div>
+          <div class="option-text">
+            <strong>Avançado — trabalha ou já trabalhou com isso</strong>
+            <span>Quer aprofundar ou dominar algo específico.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sublabel" id="s3-age-label">Sua faixa etária</div>
+      <select id="select-idade" onchange="checkStep3()">
+        <option value="" disabled selected>Selecione a faixa etária</option>
+        <option value="6-9">6 a 9 anos</option>
+        <option value="10-13">10 a 13 anos</option>
+        <option value="14-17">14 a 17 anos</option>
+        <option value="18-24">18 a 24 anos</option>
+        <option value="25-34">25 a 34 anos</option>
+        <option value="35-44">35 a 44 anos</option>
+        <option value="45+">45 anos ou mais</option>
+      </select>
+
+      <div class="btn-row">
+        <button class="btn-back" onclick="goBack(3)">← Voltar</button>
+        <button class="btn-next" onclick="nextStep(3)" id="btn-3" disabled>Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Formato + Origem -->
+    <div class="step" id="step-4">
+      <div class="step-title">Formato de aula e como chegou até nós</div>
+      <div class="step-desc">Duas perguntas rápidas para entender melhor o que funciona para você.</div>
+
+      <div class="sublabel">Prefere aulas em qual formato?</div>
+      <div class="options" style="margin-bottom:28px">
+        <div class="option" data-val="1-1" onclick="selectOption(this,'formato',4)">
+          <div class="option-icon">🎯</div>
+          <div class="option-text">
+            <strong>1-on-1 — aula individual</strong>
+            <span>Atenção 100% no aluno. O instrutor adapta o ritmo para mim.</span>
+          </div>
+        </div>
+        <div class="option" data-val="grupo" onclick="selectOption(this,'formato',4)">
+          <div class="option-icon">👥</div>
+          <div class="option-text">
+            <strong>Grupo pequeno (2 a 4 alunos)</strong>
+            <span>Prefiro aprender junto com outras pessoas no mesmo nível.</span>
+          </div>
+        </div>
+        <div class="option" data-val="indiferente" onclick="selectOption(this,'formato',4)">
+          <div class="option-icon">🤷</div>
+          <div class="option-text">
+            <strong>Tanto faz</strong>
+            <span>Estou aberto a qualquer formato, o que fizer mais sentido.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sublabel">Como você conheceu a ForjaDev?</div>
+      <div class="tags" id="tags-4">
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">Instagram</div>
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">LinkedIn</div>
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">YouTube</div>
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">TikTok</div>
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">Discord</div>
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">Indicação de amigo</div>
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">Google / busca</div>
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">Grupo de WhatsApp</div>
+        <div class="tag" onclick="toggleTagSingle(this,'origem',4)">Outro</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-back" onclick="goBack(4)">← Voltar</button>
+        <button class="btn-next" onclick="nextStep(4)" id="btn-4" disabled>Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: Dias e Horários -->
+    <div class="step" id="step-5">
+      <div class="step-title">Quando prefere ter aula?</div>
+      <div class="step-desc">Selecione o dia e o período que melhor funcionam semanalmente. Pode marcar mais de um de cada.</div>
+
+      <div class="sublabel">Dia da semana</div>
+      <div class="day-grid">
+        <div class="day-btn" onclick="toggleSchedule(this,'dia')">Segunda</div>
+        <div class="day-btn" onclick="toggleSchedule(this,'dia')">Terça</div>
+        <div class="day-btn" onclick="toggleSchedule(this,'dia')">Quarta</div>
+        <div class="day-btn" onclick="toggleSchedule(this,'dia')">Quinta</div>
+        <div class="day-btn" onclick="toggleSchedule(this,'dia')">Sexta</div>
+        <div class="day-btn" onclick="toggleSchedule(this,'dia')">Sábado</div>
+      </div>
+
+      <div class="sublabel">Período preferido</div>
+      <div class="time-grid">
+        <div class="time-btn" onclick="toggleSchedule(this,'horario')">🌅 Manhã<br><small style="color:var(--muted);font-size:0.72rem">07h – 12h</small></div>
+        <div class="time-btn" onclick="toggleSchedule(this,'horario')">☀️ Tarde<br><small style="color:var(--muted);font-size:0.72rem">12h – 18h</small></div>
+        <div class="time-btn" onclick="toggleSchedule(this,'horario')">🌙 Noite<br><small style="color:var(--muted);font-size:0.72rem">18h – 22h</small></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-back" onclick="goBack(5)">← Voltar</button>
+        <button class="btn-next" onclick="nextStep(5)" id="btn-5" disabled>Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 6: Investimento -->
+    <div class="step" id="step-6">
+      <div class="step-title">Quanto investiria por mês?</div>
+      <div class="step-desc">Uma aula por semana com instrutor dedicado. Sua resposta nos ajuda a definir os planos certos.</div>
+      <div class="price-options">
+        <div class="price-card" data-val="ate200" onclick="selectPrice(this)">
+          <span class="price-value">Até R$200</span>
+          <span class="price-desc">Orçamento mais restrito</span>
+        </div>
+        <div class="price-card" data-val="200-350" onclick="selectPrice(this)">
+          <span class="price-value">R$200 – 350</span>
+          <span class="price-desc">Faixa intermediária</span>
+        </div>
+        <div class="price-card" data-val="350-600" onclick="selectPrice(this)">
+          <span class="price-value hi">R$350 – 600</span>
+          <span class="price-desc">Pronto para investir bem</span>
+        </div>
+        <div class="price-card" data-val="600+" onclick="selectPrice(this)">
+          <span class="price-value hi">R$600+</span>
+          <span class="price-desc">O resultado é o que importa</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="goBack(6)">← Voltar</button>
+        <button class="btn-next" onclick="nextStep(6)" id="btn-6" disabled>Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 7: Perguntas abertas -->
+    <div class="step" id="step-7">
+      <div class="step-title">Conta um pouco mais sobre você</div>
+      <div class="step-desc">Opcional, mas quanto mais você compartilhar, mais personalizada será sua experiência na ForjaDev.</div>
+
+      <div class="field-group">
+        <div class="field-label">Por que está buscando aprender tecnologia agora?</div>
+        <textarea id="txt-motivo" placeholder="Ex: perdi meu emprego e quero mudar de área, meu filho fica entediado e quer criar jogos, sempre quis mas nunca tive oportunidade..."></textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">O que espera da ForjaDev? O que seria uma experiência incrível para você?</div>
+        <textarea id="txt-expectativa" placeholder="Ex: conseguir meu primeiro emprego em 6 meses, ver meu filho criar um joguinho próprio, entender como bots funcionam na prática..."></textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Tem alguma limitação que devemos saber? (tempo, equipamento, acesso à internet etc.)</div>
+        <textarea id="txt-limitacao" placeholder="Ex: só tenho disponibilidade nos finais de semana, uso notebook lento, minha internet cai às vezes..."></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-back" onclick="goBack(7)">← Voltar</button>
+        <button class="btn-next" onclick="nextStep(7)" id="btn-7">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- STEP 8: Contato -->
+    <div class="step" id="step-8">
+      <div class="step-title">Última etapa — seus contatos</div>
+      <div class="step-desc">Seus dados ficam só com a ForjaDev. Você será avisado assim que as matrículas abrirem em junho.</div>
+
+      <div class="field-group">
+        <div class="input-row">
+          <div>
+            <div class="field-label">Seu nome completo *</div>
+            <input type="text" id="input-nome" placeholder="Como prefere ser chamado" oninput="checkStep8()" />
+          </div>
+          <div>
+            <div class="field-label" id="label-idade-num">Sua idade *</div>
+            <input type="text" id="input-idade-num" placeholder="Ex: 28" oninput="checkStep8()" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="input-row">
+          <div>
+            <div class="field-label">E-mail *</div>
+            <input type="email" id="input-email" placeholder="seu@email.com" oninput="checkStep8()" />
+          </div>
+          <div>
+            <div class="field-label">WhatsApp *</div>
+            <input type="tel" id="input-whatsapp" placeholder="(11) 91234-5678" oninput="checkStep8()" />
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-back" onclick="goBack(8)">← Voltar</button>
+        <button class="btn-next" onclick="submitForm()" id="btn-8" disabled>Enviar pesquisa ✓</button>
+      </div>
+    </div>
+
+  </div><!-- /form-area -->
+
+  <!-- Thank you -->
+  <div class="thankyou" id="thankyou">
+    <div class="ty-icon">🔥</div>
+    <div class="ty-title">Recebemos tudo!</div>
+    <p class="ty-text">Obrigado por dedicar esse tempo. Suas respostas vão direto para o Rosiel. Quando as matrículas abrirem em junho, você vai ser um dos primeiros avisados — fique de olho no WhatsApp e no e-mail.</p>
+    <div class="divider"></div>
+    <p class="ty-text" style="font-size:0.82rem;color:#444">ForjaDev · forjadev.com.br</p>
+  </div>
+
+</div>
+
+<script>
+  const TOTAL = 8;
+  let cur = 1;
+
+  const ans = {
+    perfil: null, area: [], nivel: null, idade_faixa: null,
+    formato: null, origem: null, dias: [], horarios: [],
+    preco: null, motivo: '', expectativa: '', limitacao: ''
+  };
+
+  function updateProgress(s) {
+    document.getElementById('prog-fill').style.width = ((s-1)/TOTAL*100) + '%';
+    document.getElementById('prog-label').textContent = `Etapa ${s} de ${TOTAL}`;
+  }
+
+  function nextStep(from) {
+    document.getElementById('step-'+from).classList.remove('active');
+    cur = from + 1;
+    document.getElementById('step-'+cur).classList.add('active');
+    updateProgress(cur);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function goBack(from) {
+    document.getElementById('step-'+from).classList.remove('active');
+    cur = from - 1;
+    document.getElementById('step-'+cur).classList.add('active');
+    updateProgress(cur);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function selectOption(el, key, step) {
+    el.closest('.options').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    ans[key] = el.dataset.val;
+
+    if (key === 'perfil') {
+      const isResp = el.dataset.val === 'responsavel';
+      document.getElementById('notice-responsavel').classList.toggle('visible', isResp);
+      document.getElementById('s2-title').textContent = isResp ? 'O que o aluno quer aprender?' : 'O que você quer aprender?';
+      document.getElementById('s3-title').textContent = isResp ? 'Qual o nível e a idade do aluno?' : 'Qual o seu nível e a sua idade?';
+      document.getElementById('s3-age-label').textContent = isResp ? 'Faixa etária do aluno' : 'Sua faixa etária';
+      document.getElementById('label-idade-num').textContent = isResp ? 'Idade do aluno *' : 'Sua idade *';
+    }
+
+    checkBtn(step);
+  }
+
+  function toggleTag(el, key, step) {
+    el.classList.toggle('selected');
+    ans[key] = [...el.closest('.tags').querySelectorAll('.tag.selected')].map(t => t.textContent.trim());
+    checkBtn(step);
+  }
+
+  function toggleTagSingle(el, key, step) {
+    el.closest('.tags').querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+    ans[key] = el.textContent.trim();
+    checkBtn(step);
+  }
+
+  function selectPrice(el) {
+    document.querySelectorAll('.price-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    ans.preco = el.dataset.val;
+    document.getElementById('btn-6').disabled = false;
+  }
+
+  function toggleSchedule(el, key) {
+    el.classList.toggle('selected');
+    if (key === 'dia') {
+      ans.dias = [...document.querySelectorAll('.day-btn.selected')].map(b => b.textContent.trim());
+    } else {
+      ans.horarios = [...document.querySelectorAll('.time-btn.selected')].map(b => b.firstChild.textContent.trim());
+    }
+    document.getElementById('btn-5').disabled = !(ans.dias.length > 0 && ans.horarios.length > 0);
+  }
+
+  function checkStep3() {
+    ans.idade_faixa = document.getElementById('select-idade').value;
+    checkBtn(3);
+  }
+
+  function checkStep8() {
+    const nome  = document.getElementById('input-nome').value.trim();
+    const email = document.getElementById('input-email').value.trim();
+    const whats = document.getElementById('input-whatsapp').value.trim();
+    document.getElementById('btn-8').disabled = !(nome && email.includes('@') && whats.length >= 8);
+  }
+
+  function checkBtn(step) {
+    const ok = {
+      1: () => !!ans.perfil,
+      2: () => ans.area.length > 0,
+      3: () => !!ans.nivel && !!ans.idade_faixa,
+      4: () => !!ans.formato && !!ans.origem,
+      5: () => ans.dias.length > 0 && ans.horarios.length > 0,
+      6: () => !!ans.preco,
+      7: () => true,
+    };
+    const btn = document.getElementById('btn-'+step);
+    if (btn && ok[step]) btn.disabled = !ok[step]();
+  }
+
+  // ⬇️ Cole aqui a URL gerada pelo Apps Script após implantar
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyzbKwWQ5etNQJKVBSv1nq8uXoyKyLKukRMmRTgyMo8YO8cTzMzfd9Qry4JCiNxuQBXlQ/exec';
+
+  async function submitForm() {
+    ans.motivo      = document.getElementById('txt-motivo').value.trim();
+    ans.expectativa = document.getElementById('txt-expectativa').value.trim();
+    ans.limitacao   = document.getElementById('txt-limitacao').value.trim();
+
+    const payload = {
+      nome:        document.getElementById('input-nome').value.trim(),
+      email:       document.getElementById('input-email').value.trim(),
+      whatsapp:    document.getElementById('input-whatsapp').value.trim(),
+      idade_aluno: document.getElementById('input-idade-num').value.trim(),
+      ...ans
+    };
+
+    // Desabilita botão e mostra loading
+    const btn = document.getElementById('btn-8');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      // Apps Script requer no-cors por limitação do CORS; os dados chegam normalmente
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      // no-cors sempre "falha" no catch mas os dados chegam — seguimos
+      console.warn('fetch no-cors:', err);
+    }
+
+    ['hero-block','form-area'].forEach(id => document.getElementById(id).style.display = 'none');
+    document.getElementById('prog-label').style.display = 'none';
+    document.querySelector('.progress-bar').style.display = 'none';
+    document.getElementById('thankyou').classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  updateProgress(1);
+</script>
+</body>
+</html>
